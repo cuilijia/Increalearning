@@ -37,7 +37,7 @@ TrainDataSize = 8 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
-printjumpsize = 1 # 输出间隔
+printjumpsize = 2 # 输出间隔
 
 FeatureSpaceSize = 10000
 

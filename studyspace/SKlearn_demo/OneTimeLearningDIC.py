@@ -22,6 +22,8 @@ from sklearn.naive_bayes import MultinomialNB
 
 from sklearn.externals import joblib
 
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, TfidfTransformer
+
 data=[]#所有数据集
 
 xtest=[]#测试集文本向量
@@ -37,10 +39,6 @@ all_classes = np.arange(20) #分类器类别上限
 printjumpsize=2 # 输出间隔
 
 # 读入数据集 -------------------------------------------------------------------------------
-#  由复旦大学李荣陆提供。answer.rar为测试语料，共9833篇文档；train.rar为训练语料，共9804篇文档，分为20个类别。
-#  训练语料和测试语料基本按照1:1的比例来划分。收集工作花费了不少人力和物力，所以请大家在使用时尽量注明来源
-# （复旦大学计算机信息与技术系国际数据库中心自然语言处理小组）。
-
 def ReadData():
     i = 0
     data_path = os.path.join(get_data_home(), "FUDAN/answer")
@@ -68,8 +66,8 @@ Num_mintype=0
 Num_maxtype=len(data)
 type_start =Num_mintype
 type_end = Num_maxtype
-typerange = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-             10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+# typerange = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+#              10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
 # 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
 def getTRAINandTEST():
@@ -77,7 +75,11 @@ def getTRAINandTEST():
     for n in range(TrainDataSize):
         xtrain.append([])
         ytrain.append([])
-
+    # MINpage=10000
+    # for tj in range(type_start, type_end):
+    #     if(MINpage>int(len(data[tj]) / (TrainDataSize + 1))):
+    #         MINpage=int(len(data[tj]) / (TrainDataSize + 1))
+    # print(MINpage)
     for j in range(type_start, type_end):
         for i in range(len(data[j])):
             if (i in range(0, int(len(data[j]) / (TrainDataSize + 1)))):
@@ -86,13 +88,13 @@ def getTRAINandTEST():
             for p in range(TrainDataSize):
                 if (i in range(int(len(data[j]) / (TrainDataSize + 1) * (p + 1)),
                                int(len(data[j]) / (TrainDataSize + 1)) * (p + 2))):
-                    xtrain[p].append(data[j][i]['content'])
-                    ytrain[p].append(data[j][i]['type'])
+                    xtrain[0].append(data[j][i]['content'])
+                    ytrain[0].append(data[j][i]['type'])
 
 getTRAINandTEST()
-print('训练样本集 ',TrainDataSize,' 份')
-print('测试样本集 ',1,' 份')
-print("一份样本集为 %d 条  " % (len(ytest)))
+print('一次性非增量式朴素贝叶斯：')
+print('训练样本集 ',TrainDataSize*len(ytest),' 条')
+print('测试样本集 ',len(ytest),' 条')
 # end 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
 
 
@@ -104,9 +106,22 @@ parsing_time = time.time() - tick
 tick = time.time()
 
 # 数据集文本向量化 (哈希技巧) -------------------------------------------------------
-vectorizer = HashingVectorizer(decode_error='ignore', n_features=2 ** 18,
-                               alternate_sign=False)
-X_test = vectorizer.transform(xtest)
+# vectorizer = HashingVectorizer(decode_error='ignore', n_features=2 ** 18,
+#                                alternate_sign=False)
+# X_test = vectorizer.transform(xtest)
+
+oldVocubularysave=[]
+if os.path.exists("ONETIMEVocubularySave.v"):
+    oldVocubularysave = joblib.load("ONETIMEVocubularySave.v")
+VocubularyList=[]
+for numV in oldVocubularysave:
+    VocubularyList.append(numV['name'])
+vectorizer = CountVectorizer(stop_words=None,vocabulary=VocubularyList)
+transformer = TfidfTransformer()
+
+count = vectorizer.fit_transform(xtest)
+X_test = transformer.fit_transform(count)
+
 # end 数据集文本向量化 (哈希技巧) -------------------------------------------------------
 
 vectorizing_time = time.time() - tick
@@ -120,7 +135,7 @@ def progress(cls_name, stats):
     s = "%20s 分类器 : \t" % cls_name
     s += "%(n_train)6d 条训练样本  " % stats
     s += "%(n_test)6d 条测试样本  " % test_stats
-    s += "准确度: %(accuracy).3f " % stats
+    s += "准确度: %(accuracy).4f " % stats
     s += "共计 %.2fs (%5d 样本/s)" % (duration, stats['n_train'] / duration)
     return s
 
@@ -156,7 +171,7 @@ def getclassifiers():
             cls = joblib.load("Train_Model_" + cls_name + ".m")
         classifiers[cls_name]=cls
 
-getclassifiers()
+# getclassifiers()
 
 # end 获取以往保存下来的的模型------------------------------------------------------
 
@@ -165,9 +180,13 @@ getclassifiers()
 # 主循环：迭代小批量的例子-----------------------------------------------
 def IncreasingFIT():
     global total_vect_time
-    for i in range(TrainDataSize):
+    for i in range(1):
         tick = time.time()
-        X_train = vectorizer.transform(xtrain[i])
+
+        # X_train = vectorizer.transform(xtrain[i])
+        count = vectorizer.fit_transform(xtrain[i])
+        X_train = transformer.fit_transform(count)
+
         total_vect_time += time.time() - tick
 
         for cls_name, cls_useless in partial_fit_classifiers.items():
@@ -205,6 +224,7 @@ def IncreasingFIT():
 
 print('开始增量训练...')
 IncreasingFIT()
+# IncreasingFIT()
 print('已完成...')
 # end 主循环：迭代小批量的例子-----------------------------------------------
 
@@ -217,7 +237,7 @@ def saveModel():
         # 预测函数
         # print(cls.predict(X_test))
 
-saveModel()
+# saveModel()
 
 # end 保存训练好的模型------------------------------------------------------
 
@@ -250,7 +270,7 @@ def drawresults():
         accuracy, n_examples = zip(*stats['accuracy_history'])
         plot_accuracy(n_examples, accuracy, "training examples (#)")
         ax = plt.gca()
-        ax.set_ylim((0.5, 1))
+        ax.set_ylim((0.75, 1))
     plt.legend(cls_names, loc='best')
 
     plt.figure()
@@ -259,7 +279,7 @@ def drawresults():
         accuracy, runtime = zip(*stats['runtime_history'])
         plot_accuracy(runtime, accuracy, 'runtime (s)')
         ax = plt.gca()
-        ax.set_ylim((0.5, 1))
+        ax.set_ylim((0.75, 1))
     plt.legend(cls_names, loc='best')
 
     # Plot fitting times 绘制拟合时间

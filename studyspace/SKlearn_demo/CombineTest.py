@@ -73,7 +73,7 @@ ReadData()
 Num_mintype=0
 Num_maxtype=len(data)
 type_start =Num_mintype
-type_end = 20
+type_end = 5
 typerange = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
              10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
@@ -255,6 +255,7 @@ def IncreasingFIT():
     for i in range(TrainDataSize):
         tick = time.time()
 
+        # X_train = vectorizer.transform(xtrain[i])
         count = vectorizer.fit_transform(xtrain[i])
         X_train = transformer.fit_transform(count)
 
@@ -339,11 +340,11 @@ def IncreasingFIT1():
 
         # tfidf = X_train.toarray().T
 
-        # print(X_train.shape)
+        print(X_train.shape)
         model1=SelectKBest(chi2, k=1)
         X_chi2 = model1.fit_transform(X_train, ytrain[T])
-        # print(X_chi2.shape)
-        # print(model1.scores_.shape)
+        print(X_chi2.shape)
+        print(model1.scores_.shape)
 
 
         j = 0
@@ -363,7 +364,7 @@ def IncreasingFIT1():
            l.append(numV['name'])
         # print(l)
         print("========================================================")
-        # print("========================================================")
+        print("========================================================")
         oldVocubularysave = newVocubularysave
 
 
@@ -390,6 +391,7 @@ def IncreasingFIT1():
 
         print('开始增量训练...')
         IncreasingFIT()
+        # IncreasingFIT()
         print('已完成...')
 
     # joblib.dump(recordAccuracy, "recordAccuracy5.r")
@@ -456,7 +458,7 @@ def drawresults():
         accuracy, n_examples = zip(*stats['accuracy_history'])
         plot_accuracy(n_examples, accuracy, "training examples (#)")
         ax = plt.gca()
-        ax.set_ylim((0.85, 1))
+        ax.set_ylim((0.93, 1))
     plt.legend(cls_names, loc='best')
 
     plt.figure()
@@ -465,7 +467,7 @@ def drawresults():
         accuracy, runtime = zip(*stats['runtime_history'])
         plot_accuracy(runtime, accuracy, 'runtime (s)')
         ax = plt.gca()
-        ax.set_ylim((0.85, 1))
+        ax.set_ylim((0.93, 1))
     plt.legend(cls_names, loc='best')
 
     # Plot fitting times 绘制拟合时间

@@ -22,6 +22,7 @@ from sklearn.naive_bayes import MultinomialNB
 
 from sklearn.externals import joblib
 
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, TfidfTransformer
 data=[]#所有数据集
 
 xtest=[]#测试集文本向量
@@ -104,9 +105,18 @@ parsing_time = time.time() - tick
 tick = time.time()
 
 # 数据集文本向量化 (哈希技巧) -------------------------------------------------------
-vectorizer = HashingVectorizer(decode_error='ignore', n_features=2 ** 18,
-                               alternate_sign=False)
-X_test = vectorizer.transform(xtest)
+
+oldVocubularysave=[]
+if os.path.exists("VocubularySave.v"):
+    oldVocubularysave = joblib.load("VocubularySave.v")
+VocubularyList=[]
+for numV in oldVocubularysave:
+    VocubularyList.append(numV['name'])
+vectorizer = CountVectorizer(stop_words=None,vocabulary=VocubularyList)
+transformer = TfidfTransformer()
+
+count = vectorizer.fit_transform(xtest)
+X_test = transformer.fit_transform(count)
 # end 数据集文本向量化 (哈希技巧) -------------------------------------------------------
 
 vectorizing_time = time.time() - tick
@@ -156,7 +166,7 @@ def getclassifiers():
             cls = joblib.load("Train_Model_" + cls_name + ".m")
         classifiers[cls_name]=cls
 
-getclassifiers()
+# getclassifiers()
 
 # end 获取以往保存下来的的模型------------------------------------------------------
 
@@ -167,7 +177,11 @@ def IncreasingFIT():
     global total_vect_time
     for i in range(TrainDataSize):
         tick = time.time()
-        X_train = vectorizer.transform(xtrain[i])
+
+        # X_train = vectorizer.transform(xtrain[i])
+        count = vectorizer.fit_transform(xtrain[i])
+        X_train = transformer.fit_transform(count)
+
         total_vect_time += time.time() - tick
 
         for cls_name, cls_useless in partial_fit_classifiers.items():
@@ -205,6 +219,7 @@ def IncreasingFIT():
 
 print('开始增量训练...')
 IncreasingFIT()
+# IncreasingFIT()
 print('已完成...')
 # end 主循环：迭代小批量的例子-----------------------------------------------
 
@@ -217,7 +232,7 @@ def saveModel():
         # 预测函数
         # print(cls.predict(X_test))
 
-saveModel()
+# saveModel()
 
 # end 保存训练好的模型------------------------------------------------------
 

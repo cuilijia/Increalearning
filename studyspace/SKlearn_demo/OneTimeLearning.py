@@ -34,7 +34,7 @@ TrainDataSize = 8 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
-printjumpsize=2 # 输出间隔
+printjumpsize=1 # 输出间隔
 
 # 读入数据集 -------------------------------------------------------------------------------
 #  由复旦大学李荣陆提供。answer.rar为测试语料，共9833篇文档；train.rar为训练语料，共9804篇文档，分为20个类别。
@@ -86,13 +86,14 @@ def getTRAINandTEST():
             for p in range(TrainDataSize):
                 if (i in range(int(len(data[j]) / (TrainDataSize + 1) * (p + 1)),
                                int(len(data[j]) / (TrainDataSize + 1)) * (p + 2))):
-                    xtrain[p].append(data[j][i]['content'])
-                    ytrain[p].append(data[j][i]['type'])
+                    xtrain[0].append(data[j][i]['content'])
+                    ytrain[0].append(data[j][i]['type'])
 
 getTRAINandTEST()
-print('训练样本集 ',TrainDataSize,' 份')
-print('测试样本集 ',1,' 份')
-print("一份样本集为 %d 条  " % (len(ytest)))
+print('一次性非增量式朴素贝叶斯：')
+print('训练样本集 ',TrainDataSize*len(ytest),' 条')
+print('测试样本集 ',len(ytest),' 条')
+# print("一份样本集为 %d 条  " % (len(ytest)))
 # end 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
 
 
@@ -120,8 +121,8 @@ def progress(cls_name, stats):
     s = "%20s 分类器 : \t" % cls_name
     s += "%(n_train)6d 条训练样本  " % stats
     s += "%(n_test)6d 条测试样本  " % test_stats
-    s += "准确度: %(accuracy).3f " % stats
-    s += "共计 %.2fs (%5d 样本/s)" % (duration, stats['n_train'] / duration)
+    s += "准确度（accuracy）: %(accuracy).3f " % stats
+    s += "用时共计 %.2fs (%5d 样本/s)" % (duration, stats['n_train'] / duration)
     return s
 
 # 这里有一些支持`partial_fit`方法的分类器
@@ -156,7 +157,7 @@ def getclassifiers():
             cls = joblib.load("Train_Model_" + cls_name + ".m")
         classifiers[cls_name]=cls
 
-getclassifiers()
+# getclassifiers()
 
 # end 获取以往保存下来的的模型------------------------------------------------------
 
@@ -165,7 +166,7 @@ getclassifiers()
 # 主循环：迭代小批量的例子-----------------------------------------------
 def IncreasingFIT():
     global total_vect_time
-    for i in range(TrainDataSize):
+    for i in range(1):
         tick = time.time()
         X_train = vectorizer.transform(xtrain[i])
         total_vect_time += time.time() - tick
@@ -217,7 +218,7 @@ def saveModel():
         # 预测函数
         # print(cls.predict(X_test))
 
-saveModel()
+# saveModel()
 
 # end 保存训练好的模型------------------------------------------------------
 

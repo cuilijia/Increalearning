@@ -1,94 +1,86 @@
-from __future__ import print_function
-from time import time
-
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-from sklearn.decomposition import NMF, LatentDirichletAllocation
-from sklearn.datasets import fetch_20newsgroups
-
-n_samples = 2000
-n_features = 1000
-n_components = 10
-n_top_words = 20
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, TfidfTransformer
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import chi2
 
 
-def print_top_words(model, feature_names, n_top_words):
-    for topic_idx, topic in enumerate(model.components_):
-        message = "Topic #%d: " % topic_idx
-        message += " ".join([feature_names[i]
-                             for i in topic.argsort()[:-n_top_words - 1:-1]])
-        print(message)
-    print()
+corpus = [
+    'This is the first document.',
+    'This is the second second document.',
+    'And the third one.',
+    'Is this the first document?'
+]
+corpus2 = [
+    'Is this first this this first this this the first document?',
+]
 
+ls=[ 'document', 'first', 'one', 'second']
+vectorizer = CountVectorizer(stop_words=None,vocabulary=ls)
+count = vectorizer.fit_transform(corpus)
+print(vectorizer.get_feature_names())
+print(vectorizer.vocabulary_)
+print(count.toarray())
 
-# Load the 20 newsgroups dataset and vectorize it. We use a few heuristics
-# to filter out useless terms early on: the posts are stripped of headers,
-# footers and quoted replies, and common English words, words occurring in
-# only one document or in at least 95% of the documents are removed.
+test=vectorizer.vocabulary_
+vectorizer2 = CountVectorizer(stop_words=None,vocabulary=test)
+transformer = TfidfTransformer()
+tfidf_matrix = transformer.fit_transform(count)
+print(tfidf_matrix.toarray())
+#
 
-print("Loading dataset...")
-t0 = time()
-dataset = fetch_20newsgroups(shuffle=True, random_state=1,
-                             remove=('headers', 'footers', 'quotes'))
-data_samples = dataset.data[:n_samples]
-print("done in %0.3fs." % (time() - t0))
+# print(tfidf_vec.get_feature_names())
+# print(tfidf_vec.vocabulary_)
+# print(tfidf_matrix.toarray())
+count = vectorizer2.fit_transform(corpus)
+print(vectorizer2.get_feature_names())
 
-# Use tf-idf features for NMF.
-print("Extracting tf-idf features for NMF...")
-tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2,
-                                   max_features=n_features,
-                                   stop_words='english')
-t0 = time()
-tfidf = tfidf_vectorizer.fit_transform(data_samples)
-print("done in %0.3fs." % (time() - t0))
+print(vectorizer2.vocabulary_)
+print(count.toarray())
 
-# Use tf (raw term count) features for LDA.
-print("Extracting tf features for LDA...")
-tf_vectorizer = CountVectorizer(max_df=0.95, min_df=2,
-                                max_features=n_features,
-                                stop_words='english')
-t0 = time()
-tf = tf_vectorizer.fit_transform(data_samples)
-print("done in %0.3fs." % (time() - t0))
-print()
+Vocubularysave = []
+VocubularyList =vectorizer2.get_feature_names()
+j = 0
+for i in VocubularyList:
+    # print(i,",",vectorizer2.vocabulary_[i],",",max(tfidf[vectorizer2.vocabulary_[i]]))
+    if(j<100):
+        Vocubularysave.append({"name":i,'numb':vectorizer2.vocabulary_[i]})
+        j = j+1
+    # print('-',end='')
+print(len(Vocubularysave))
 
-# Fit the NMF model
-print("Fitting the NMF model (Frobenius norm) with tf-idf features, "
-      "n_samples=%d and n_features=%d..."
-      % (n_samples, n_features))
-t0 = time()
-nmf = NMF(n_components=n_components, random_state=1,
-          alpha=.1, l1_ratio=.5).fit(tfidf)
-print("done in %0.3fs." % (time() - t0))
+newV=Vocubularysave+Vocubularysave+[]
 
-print("\nTopics in NMF model (Frobenius norm):")
-tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-print_top_words(nmf, tfidf_feature_names, n_top_words)
+print(sorted(Vocubularysave,key=lambda x:x['numb'], reverse=True))
 
-# Fit the NMF model
-print("Fitting the NMF model (generalized Kullback-Leibler divergence) with "
-      "tf-idf features, n_samples=%d and n_features=%d..."
-      % (n_samples, n_features))
-t0 = time()
-nmf = NMF(n_components=n_components, random_state=1,
-          beta_loss='kullback-leibler', solver='mu', max_iter=1000, alpha=.1,
-          l1_ratio=.5).fit(tfidf)
-print("done in %0.3fs." % (time() - t0))
+def sortbyword(one_list,size,word):
+    '''''
+    使用排序的方法
+    '''
+    result_list=[]
+    result_listname = []
+    temp_list=sorted(one_list,key=lambda x:x[word], reverse=True)
+    i = 0
+    j = 0
+    while i<len(temp_list):
+        print("  i=:",i)
+        if temp_list[i][word] not in result_listname:
+                result_list.append(temp_list[i])
+                result_listname.append(temp_list[i][word])
+                j+=1
+                i+=1
+                if(j>=size):
+                    return result_list
+        else:
+            i+=1
 
-print("\nTopics in NMF model (generalized Kullback-Leibler divergence):")
-tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-print_top_words(nmf, tfidf_feature_names, n_top_words)
+    return result_list
 
-print("Fitting LDA models with tf features, "
-      "n_samples=%d and n_features=%d..."
-      % (n_samples, n_features))
-lda = LatentDirichletAllocation(n_components=n_components, max_iter=5,
-                                learning_method='online',
-                                learning_offset=50.,
-                                random_state=0)
-t0 = time()
-lda.fit(tf)
-print("done in %0.3fs." % (time() - t0))
-
-print("\nTopics in LDA model:")
-tf_feature_names = tf_vectorizer.get_feature_names()
-print_top_words(lda, tf_feature_names, n_top_words)
+print('newVbefore4:',newV)
+print('newVafter4:',sortbyword(newV,2,'numb'))
+xx=sortbyword(newV,3,'numb')
+# xx=xx['name']
+# print(xx)
+#
+# tfidf_vec = TfidfVectorizer()
+# tfidf_matrix = tfidf_vec.fit_transform(corpus)
+# X_chi2 = SelectKBest(chi2, k=5).fit_transform(tfidf_matrix, [1,2,3,4])
+# print(X_chi2.toarray())
