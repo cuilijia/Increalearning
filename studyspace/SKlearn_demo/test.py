@@ -526,7 +526,6 @@ def drawresults():
     autolabel(rectangles)
     plt.show()
 
-
 drawresults()
 
 # print(len(recordAccuracyList))
