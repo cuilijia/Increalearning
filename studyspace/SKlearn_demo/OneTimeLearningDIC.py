@@ -32,16 +32,18 @@ ytest=[]#测试集类别
 xtrain=[]#训练集文本向量
 ytrain=[]#训练集类别
 
-TrainDataSize = 8 #训练集个数
+TrainDataSize = 1 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
-printjumpsize=2 # 输出间隔
+printjumpsize=1 # 输出间隔
+
+# 特征空间ONETIMEVocubulary大小为20000
 
 # 读入数据集 -------------------------------------------------------------------------------
-def ReadData():
+def ReadData(path):
     i = 0
-    data_path = os.path.join(get_data_home(), "FUDAN/answer")
+    data_path = os.path.join(get_data_home(), path)
     for docname in glob(os.path.join(data_path, "*")):
         doc = []
         for filename in glob(os.path.join(docname, "*.txt")):
@@ -58,7 +60,7 @@ def ReadData():
         print("已读入样本集: ", docname)
         i = i + 1
 
-ReadData()
+ReadData("FUDAN/train")
 # end 读入数据集 -------------------------------------------------------------------------------
 
 # 实际参与训练的类型范围
@@ -70,30 +72,37 @@ type_end = Num_maxtype
 #              10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
 # 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
-def getTRAINandTEST():
+def getTEST():
+    global data
+    for j in range(type_start, type_end):
+        for i in range(int(len(data[j]))):
+                xtest.append(data[j][i]['content'])
+                ytest.append(data[j][i]['type'])
 
+def getTRAIN():
+    global data
     for n in range(TrainDataSize):
         xtrain.append([])
         ytrain.append([])
-    # MINpage=10000
-    # for tj in range(type_start, type_end):
-    #     if(MINpage>int(len(data[tj]) / (TrainDataSize + 1))):
-    #         MINpage=int(len(data[tj]) / (TrainDataSize + 1))
-    # print(MINpage)
+
+    # print('type_end:',type_end)
+
     for j in range(type_start, type_end):
         for i in range(len(data[j])):
-            if (i in range(0, int(len(data[j]) / (TrainDataSize + 1)))):
-                xtest.append(data[j][i]['content'])
-                ytest.append(data[j][i]['type'])
             for p in range(TrainDataSize):
-                if (i in range(int(len(data[j]) / (TrainDataSize + 1) * (p + 1)),
-                               int(len(data[j]) / (TrainDataSize + 1)) * (p + 2))):
+                if (i in range(int(len(data[j]) / (TrainDataSize) * (p)),
+                               int(len(data[j]) / (TrainDataSize)) * (p + 1))):
+                    # print(int(len(data[j]) / (TrainDataSize ) * (p)), 'to',
+                    #       int(len(data[j]) / (TrainDataSize )) * (p+1 ))
                     xtrain[0].append(data[j][i]['content'])
                     ytrain[0].append(data[j][i]['type'])
 
-getTRAINandTEST()
+getTRAIN()
+ReadData("FUDAN/answer")
+getTEST()
+
 print('一次性非增量式朴素贝叶斯：')
-print('训练样本集 ',TrainDataSize*len(ytest),' 条')
+print('训练样本集 ',len(ytest),' 条')
 print('测试样本集 ',len(ytest),' 条')
 # end 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
 

@@ -36,13 +36,14 @@ all_classes = np.arange(20) #分类器类别上限
 
 printjumpsize = 1 # 输出间隔
 
-FeatureSpaceSize = 30000
+FeatureSpaceSize =20000
 
 updatesize=1
 # 读入数据集 -------------------------------------------------------------------------------
-def ReadData():
+# 读入数据集 -------------------------------------------------------------------------------
+def ReadData(path):
     i = 0
-    data_path = os.path.join(get_data_home(), "FUDAN/answer")
+    data_path = os.path.join(get_data_home(), path)
     for docname in glob(os.path.join(data_path, "*")):
         doc = []
         for filename in glob(os.path.join(docname, "*.txt")):
@@ -59,38 +60,48 @@ def ReadData():
         print("已读入样本集: ", docname)
         i = i + 1
 
-ReadData()
+ReadData("FUDAN/train")
 # end 读入数据集 -------------------------------------------------------------------------------
 
 # 实际参与训练的类型范围
 Num_mintype=0
 Num_maxtype=len(data)
 type_start =Num_mintype
-type_end = Num_maxtype
+type_end = 20
 typerange = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
              10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
+if type_end>Num_maxtype:
+    type_end=Num_maxtype
 # 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
-def getTRAINandTEST():
+def getTEST():
+    global data
+    for j in range(type_start, type_end):
+        for i in range(int(len(data[j]))):
+                xtest.append(data[j][i]['content'])
+                ytest.append(data[j][i]['type'])
 
+def getTRAIN():
+    global data
     for n in range(TrainDataSize):
         xtrain.append([])
         ytrain.append([])
 
-    j=type_end-1
+    # print('type_end:',type_end)
+
     for j in range(type_start, type_end):
         for i in range(len(data[j])):
-            if (i in range(0, int(len(data[j]) / (TrainDataSize + 1)))):
-                xtest.append(data[j][i]['content'])
-                ytest.append(data[j][i]['type'])
             for p in range(TrainDataSize):
-                if (i in range(int(len(data[j]) / (TrainDataSize + 1) * (p + 1)),
-                               int(len(data[j]) / (TrainDataSize + 1)) * (p + 2))):
-                    xtrain[0].append(data[j][i]['content'])
-                    ytrain[0].append(data[j][i]['type'])
-        j=j-1
+                if (i in range(int(len(data[j]) / (TrainDataSize) * (p)),
+                               int(len(data[j]) / (TrainDataSize)) * (p + 1))):
+                    # print(int(len(data[j]) / (TrainDataSize ) * (p)), 'to',
+                    #       int(len(data[j]) / (TrainDataSize )) * (p+1 ))
+                    xtrain[p].append(data[j][i]['content'])
+                    ytrain[p].append(data[j][i]['type'])
 
-getTRAINandTEST()
+getTRAIN()
+ReadData("FUDAN/answer")
+getTEST()
 print('训练样本集 ',TrainDataSize,' 份')
 print('测试样本集 ',1,' 份')
 print("一份样本集为 %d 条  " % (len(ytest)))
@@ -231,7 +242,7 @@ def IncreasingFIT():
         # newVocubularysave=oldVocubularysave
         newVocubularysave=oldVocubularysave+newVocubularysave
         newVocubularysave=sortbyword(newVocubularysave, FeatureSpaceSize, 'value')
-        # print(newVocubularysave)
+        print(newVocubularysave)
         l=[]
         for numV in newVocubularysave:
            l.append(numV['name'])

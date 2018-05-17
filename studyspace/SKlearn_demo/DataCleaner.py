@@ -16,7 +16,7 @@ print(stopkey.__len__())
 
 
 i = 0
-data_path = os.path.join(get_data_home(), "FUDAN/answer")
+data_path = os.path.join(get_data_home(), "FUDAN/train")
 for docname in glob(os.path.join(data_path, "*")):
     doc = []
     for filename in glob(os.path.join(docname, "*.txt")):
