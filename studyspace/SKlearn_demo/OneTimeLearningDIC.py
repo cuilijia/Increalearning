@@ -151,17 +151,17 @@ def progress(cls_name, stats):
 # 这里有一些支持`partial_fit`方法的分类器
 # 新创建分类器容器
 partial_fit_classifiers = {
-    'SGD': SGDClassifier(),
-    'Perceptron': Perceptron(),
+    # 'SGD': SGDClassifier(),
+    # 'Perceptron': Perceptron(),
     'NB Multinomial': MultinomialNB(alpha=0.01),
-    'Passive-Aggressive': PassiveAggressiveClassifier(),
+    # 'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 # 载入旧的分类器容器
 classifiers={
-    'SGD': SGDClassifier(),
-    'Perceptron': Perceptron(),
+    # 'SGD': SGDClassifier(),
+    # 'Perceptron': Perceptron(),
     'NB Multinomial': MultinomialNB(alpha=0.01),
-    'Passive-Aggressive': PassiveAggressiveClassifier(),
+    # 'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 
 cls_stats = {}

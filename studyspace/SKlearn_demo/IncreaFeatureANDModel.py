@@ -38,9 +38,10 @@ TrainDataSize = 8 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
-printjumpsize = 2 # 输出间隔
+printjumpsize = 1 # 输出间隔
 
-FeatureSpaceSize = 20000
+FeatureSpaceSize = 5000
+A_all=0.9270
 
 updatesize = 8
 
@@ -109,7 +110,8 @@ def getTRAIN():
 getTRAIN()
 ReadData("FUDAN/answer")
 getTEST()
-print('训练样本集 ',len(ytrain[0])*TrainDataSize,' 条')
+print('特征空间增量优化朴素贝叶斯增量学习:')
+print('训练样本集 ',len(ytrain[0]),'条',TrainDataSize,'份')
 print('测试样本集 ',len(ytest),' 条')
 # end 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
 
@@ -148,12 +150,12 @@ def progress(cls_name, stats):
     """Report progress information, return a string.报告进度信息，返回一个字符串。"""
     duration = time.time() - stats['t0']
     s = "%20s 分类器 : \t" % cls_name
-    s += "%(n_train)6d 条训练样本  " % stats
+    s += "%(n_train)6d 条特征空间训练样本  " % stats
     s += "%(n_test)6d 条测试样本  " % test_stats
     s += "准确度: %(accuracy).4f " % stats
     s += "信息损失率： %.4f " % stats['lost']
     s += "增长率： %.4f " % stats['increaSpeed']
-    s += "共计 %.2fs (%5d 样本/s)" % (duration, stats['n_train'] / duration)
+    # s += "共计 %.2fs (%5d 样本/s)" % (duration, stats['n_train'] / duration)
     return s
 
 def progress2(cls_name, stats,no):
@@ -166,7 +168,7 @@ def progress2(cls_name, stats,no):
     s += "准确度: %.4f " % Accuracy
     s += "信息损失率： %.4f " % stats['lost']
     s += "增长率： %.4f " % stats['increaSpeed']
-    s += "共计 %.2fs (%5d 样本/s)" % (duration, stats['n_train'] / duration)
+    # s += "共计 %.2fs (%5d 样本/s)" % (duration, stats['n_train'] / duration)
     return s
 
 
@@ -193,7 +195,7 @@ def sortbyword(one_list,size,word):
     result_list = []
     result_listname = []
     temp_list=sorted(one_list,key=lambda x:x[word], reverse=True)
-    print("sorted!")
+    # print("sorted!")
     i=0
     j=0
     while i<len(temp_list):
@@ -288,7 +290,7 @@ def IncreasingFIT():
                     # 测试准确性函数
                     cls_stats[cls_name]['accuracy'] = cls.score(X_test, ytest)
 
-                    cls_stats[cls_name]['lost'] = 0.9478 - cls.score(X_test, ytest)
+                    cls_stats[cls_name]['lost'] = A_all - cls.score(X_test, ytest)
 
                     AccuracyAverage[cls_name]['increaSpeed'] = cls.score(X_test, ytest)-FirstScore
 
@@ -310,7 +312,7 @@ def IncreasingFIT():
                     tick = time.time()
 
                     # 测试准确性函数
-                    AccuracyAverage[cls_name]['lost'] = 0.9478 - cls.score(X_test, ytest)
+                    AccuracyAverage[cls_name]['lost'] = A_all - cls.score(X_test, ytest)
                     AccuracyAverage[cls_name]['accuracy'] = cls.score(X_test, ytest)
 
                     acc_history = (AccuracyAverage[cls_name]['accuracy'],
@@ -363,7 +365,7 @@ def IncreasingFIT1():
                 {"name": i, 'numb': vectorizer.vocabulary_[i], 'value': model1.scores_[j] })
             j = j + 1
 
-        print("get newVocubularysave!")
+        # print("get newVocubularysave!")
         # newVocubularysave=oldVocubularysave
         newVocubularysave=oldVocubularysave+newVocubularysave
         newVocubularysave=sortbyword(newVocubularysave, FeatureSpaceSize, 'value')
@@ -395,20 +397,20 @@ def IncreasingFIT1():
         # end 数据集文本向量化 (哈希技巧) -------------------------------------------------------
 
 
-        print(len(newVocubularysave))
+        # print(len(newVocubularysave))
         joblib.dump(newVocubularysave, "VocubularySave.v")
 
-        print('开始增量训练...')
+        # print('开始朴素贝叶斯模型增量训练...')
         # if T ==updatesize-1:
         IncreasingFIT()
-        print('已完成...')
+        # print('已完成朴素贝叶斯模型增量训练...')
 
     # joblib.dump(recordAccuracy, "recordAccuracy5.r")
     # recordAccuracyList.append(recordAccuracy)
 
-print('开始增量训练...')
+print('开始特征空间增量训练...')
 IncreasingFIT1()
-print('已完成...')
+print('已完成特征空间增量...')
 # end 主循环：迭代小批量的例子-----------------------------------------------
 
 

@@ -34,7 +34,7 @@ TrainDataSize = 8 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
-printjumpsize=2 # 输出间隔
+printjumpsize=1 # 输出间隔
 
 # 读入数据集 -------------------------------------------------------------------------------
 #  由复旦大学李荣陆提供。answer.rar为测试语料，共9833篇文档；train.rar为训练语料，共9804篇文档，分为20个类别。
@@ -102,9 +102,9 @@ def getTRAIN():
 getTRAIN()
 ReadData("FUDAN/answer")
 getTEST()
-print('训练样本集 ',TrainDataSize,' 份')
-print('测试样本集 ',1,' 份')
-print("一份样本集为 %d 条  " % (len(ytest)))
+print('hashtrick朴素贝叶斯增量学习:')
+print('训练样本集 ',len(ytrain[0]),'条',TrainDataSize,'份')
+print('测试样本集 ',len(ytest),' 条')
 # end 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
 
 
@@ -132,30 +132,34 @@ def progress(cls_name, stats):
     s = "%20s 分类器 : \t" % cls_name
     s += "%(n_train)6d 条训练样本  " % stats
     s += "%(n_test)6d 条测试样本  " % test_stats
-    s += "准确度: %(accuracy).3f " % stats
-    s += "共计 %.2fs (%5d 样本/s)" % (duration, stats['n_train'] / duration)
+    s+= "准确度: %.4f " % stats['accuracy']
+    s += "信息损失率： %.4f " % stats['lost']
+    s += "增长率： %.4f " % stats['increaSpeed']
     return s
 
 # 这里有一些支持`partial_fit`方法的分类器
 # 新创建分类器容器
 partial_fit_classifiers = {
-    'SGD': SGDClassifier(),
-    'Perceptron': Perceptron(),
+    # 'SGD': SGDClassifier(),
+    # 'Perceptron': Perceptron(),
     'NB Multinomial': MultinomialNB(alpha=0.01),
-    'Passive-Aggressive': PassiveAggressiveClassifier(),
+    # 'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 # 载入旧的分类器容器
 classifiers={
-    'SGD': SGDClassifier(),
-    'Perceptron': Perceptron(),
+    # 'SGD': SGDClassifier(),
+    # 'Perceptron': Perceptron(),
     'NB Multinomial': MultinomialNB(alpha=0.01),
-    'Passive-Aggressive': PassiveAggressiveClassifier(),
+    # 'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 
 cls_stats = {}
 for cls_name in partial_fit_classifiers:
-    stats = {'n_train': 0, 'n_train_pos': 0,
-             'accuracy': 0.0, 'accuracy_history': [(0, 0)], 't0': time.time(),
+    stats ={'n_train': 0, 'n_train_pos': 0,
+             'accuracy': 0.0,
+             'increaSpeed':0.0,
+             'lost': 0.0,
+             'accuracy_history': [(0, 0)], 't0': time.time(),
              'runtime_history': [(0, 0)], 'total_fit_time': 0.0}
     cls_stats[cls_name] = stats
 
@@ -199,6 +203,9 @@ def IncreasingFIT():
             cls_stats[cls_name]['n_train_pos'] += sum(ytrain[i])
             tick = time.time()
 
+            if i == 0:
+                FirstScore = cls.score(X_test, ytest)
+
             #测试准确性函数
             cls_stats[cls_name]['accuracy'] = cls.score(X_test, ytest)
 
@@ -210,10 +217,11 @@ def IncreasingFIT():
                            total_vect_time + cls_stats[cls_name]['total_fit_time'])
             cls_stats[cls_name]['runtime_history'].append(run_history)
 
+            cls_stats[cls_name]['increaSpeed'] = cls.score(X_test, ytest) - FirstScore
             if i % printjumpsize == 0:
                 print(progress(cls_name, cls_stats[cls_name]))
-        if i % printjumpsize == 0:
-            print('\n')
+        # if i % printjumpsize == 0:
+            # print('\n')
 
 print('开始增量训练...')
 IncreasingFIT()
@@ -229,7 +237,7 @@ def saveModel():
         # 预测函数
         # print(cls.predict(X_test))
 
-saveModel()
+# saveModel()
 
 # end 保存训练好的模型------------------------------------------------------
 
@@ -243,7 +251,7 @@ def plot_accuracy(x, y, x_legend):
     """Plot accuracy as a function of x."""
     x = np.array(x)
     y = np.array(y)
-    plt.title('Classification accuracy as a function of %s' % x_legend)
+    plt.title('Classification accuracy')
     plt.xlabel('%s' % x_legend)
     plt.ylabel('Accuracy')
     plt.grid(True)
@@ -260,7 +268,7 @@ def drawresults():
     for _, stats in sorted(cls_stats.items()):
         # Plot accuracy evolution with #examples 用#examples绘制准确性演变图
         accuracy, n_examples = zip(*stats['accuracy_history'])
-        plot_accuracy(n_examples, accuracy, "training examples (#)")
+        plot_accuracy(n_examples, accuracy, "Number of training examples")
         ax = plt.gca()
         ax.set_ylim((0.5, 1))
     plt.legend(cls_names, loc='best')

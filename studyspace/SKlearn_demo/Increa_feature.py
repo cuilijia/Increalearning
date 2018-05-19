@@ -30,7 +30,7 @@ ytest=[]#测试集类别
 xtrain=[]#训练集文本向量
 ytrain=[]#训练集类别
 
-TrainDataSize = 1 #训练集个数
+TrainDataSize = 8 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
@@ -242,7 +242,7 @@ def IncreasingFIT():
         # newVocubularysave=oldVocubularysave
         newVocubularysave=oldVocubularysave+newVocubularysave
         newVocubularysave=sortbyword(newVocubularysave, FeatureSpaceSize, 'value')
-        print(newVocubularysave)
+        # print(newVocubularysave)
         l=[]
         for numV in newVocubularysave:
            l.append(numV['name'])

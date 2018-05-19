@@ -31,12 +31,12 @@ ytest=[]#测试集类别
 xtrain=[]#训练集文本向量
 ytrain=[]#训练集类别
 
-TrainDataSize = 6 #训练集个数
+TrainDataSize = 8 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
-printjumpsize=2 # 输出间隔
-
+printjumpsize=1 # 输出间隔
+A_all=0.9478
 # 读入数据集 -------------------------------------------------------------------------------
 #  由复旦大学李荣陆提供。answer.rar为测试语料，共9833篇文档；train.rar为训练语料，共9804篇文档，分为20个类别。
 #  训练语料和测试语料基本按照1:1的比例来划分。收集工作花费了不少人力和物力，所以请大家在使用时尽量注明来源
@@ -104,9 +104,9 @@ def getTRAIN():
 getTRAIN()
 ReadData("FUDAN/answer")
 getTEST()
-print('训练样本集 ',TrainDataSize,' 份')
-print('测试样本集 ',1,' 份')
-print("一份样本集为 %d 条  " % (len(ytest)))
+print('特征向量化朴素贝叶斯增量学习:')
+print('训练样本集 ',len(ytrain[0]),'条',TrainDataSize,'份')
+print('测试样本集 ',len(ytest),' 条')
 # end 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
 
 
@@ -139,34 +139,39 @@ test_stats['n_test_pos'] += sum(ytest)
 
 def progress(cls_name, stats):
     """Report progress information, return a string.报告进度信息，返回一个字符串。"""
+    Accuracy = stats['accuracy']
     duration = time.time() - stats['t0']
     s = "%20s 分类器 : \t" % cls_name
     s += "%(n_train)6d 条训练样本  " % stats
     s += "%(n_test)6d 条测试样本  " % test_stats
-    s += "准确度: %(accuracy).3f " % stats
-    s += "共计 %.2fs (%5d 样本/s)" % (duration, stats['n_train'] / duration)
+    s+= "准确度: %.4f " % Accuracy
+    s += "信息损失率： %.4f " % stats['lost']
+    s += "增长率： %.4f " % stats['increaSpeed']
     return s
 
 # 这里有一些支持`partial_fit`方法的分类器
 # 新创建分类器容器
 partial_fit_classifiers = {
-    'SGD': SGDClassifier(),
-    'Perceptron': Perceptron(),
+    # 'SGD': SGDClassifier(),
+    # 'Perceptron': Perceptron(),
     'NB Multinomial': MultinomialNB(alpha=0.01),
-    'Passive-Aggressive': PassiveAggressiveClassifier(),
+    # 'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 # 载入旧的分类器容器
 classifiers={
-    'SGD': SGDClassifier(),
-    'Perceptron': Perceptron(),
+    # 'SGD': SGDClassifier(),
+    # 'Perceptron': Perceptron(),
     'NB Multinomial': MultinomialNB(alpha=0.01),
-    'Passive-Aggressive': PassiveAggressiveClassifier(),
+    # 'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 
 cls_stats = {}
 for cls_name in partial_fit_classifiers:
-    stats = {'n_train': 0, 'n_train_pos': 0,
-             'accuracy': 0.0, 'accuracy_history': [(0, 0)], 't0': time.time(),
+    stats ={'n_train': 0, 'n_train_pos': 0,
+             'accuracy': 0.0,
+             'increaSpeed':0.0,
+             'lost': 0.0,
+             'accuracy_history': [(0, 0)], 't0': time.time(),
              'runtime_history': [(0, 0)], 'total_fit_time': 0.0}
     cls_stats[cls_name] = stats
 
@@ -197,6 +202,7 @@ def IncreasingFIT():
 
         total_vect_time += time.time() - tick
 
+
         for cls_name, cls_useless in partial_fit_classifiers.items():
             cls = classifiers[cls_name]
 
@@ -216,6 +222,8 @@ def IncreasingFIT():
 
             #测试准确性函数
             cls_stats[cls_name]['accuracy'] = cls.score(X_test, ytest)
+            if i == 0:
+                FirstScore = cls.score(X_test, ytest)
 
             cls_stats[cls_name]['prediction_time'] = time.time() - tick
             acc_history = (cls_stats[cls_name]['accuracy'],
@@ -225,10 +233,14 @@ def IncreasingFIT():
                            total_vect_time + cls_stats[cls_name]['total_fit_time'])
             cls_stats[cls_name]['runtime_history'].append(run_history)
 
+            cls_stats[cls_name]['increaSpeed'] = cls.score(X_test, ytest) - FirstScore
+
+            cls_stats[cls_name]['lost'] = A_all - cls.score(X_test, ytest)
+
             if i % printjumpsize == 0:
                 print(progress(cls_name, cls_stats[cls_name]))
-        if i % printjumpsize == 0:
-            print('\n')
+        # if i % printjumpsize == 0:
+        #     print('\n')
 
 print('开始增量训练...')
 IncreasingFIT()
@@ -259,7 +271,7 @@ def plot_accuracy(x, y, x_legend):
     """Plot accuracy as a function of x."""
     x = np.array(x)
     y = np.array(y)
-    plt.title('Classification accuracy as a function of %s' % x_legend)
+    plt.title('Classification accuracy')
     plt.xlabel('%s' % x_legend)
     plt.ylabel('Accuracy')
     plt.grid(True)
