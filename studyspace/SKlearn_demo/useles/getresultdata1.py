@@ -40,13 +40,16 @@ all_classes = np.arange(20) #分类器类别上限
 
 printjumpsize = 1 # 输出间隔
 
-FeatureSpaceSize = 20000
-A_all=0.9478
+FeatureSpaceSize = 50000
+
+featurespacename='NB (featrue=50000)'
+A_all=0
 
 updatesize = 8
 
 recordAccuracy =[]
 recordAccuracyList =[]
+
 
 # 读入数据集 -------------------------------------------------------------------------------
 def ReadData(path):
@@ -134,7 +137,7 @@ tick = time.time()
 partial_fit_classifiers = {
     # 'SGD': SGDClassifier(),
     # 'Perceptron': Perceptron(),
-    'NB Multinomial': MultinomialNB(alpha=0.01),
+    featurespacename: MultinomialNB(alpha=0.01),
     # 'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 # 载入旧的分类器容器
@@ -240,7 +243,7 @@ def IncreasingFIT():
     classifiers = {
         # 'SGD': SGDClassifier(),
         # 'Perceptron': Perceptron(),
-        'NB Multinomial': MultinomialNB(alpha=0.01),
+        featurespacename: MultinomialNB(alpha=0.01),
         # 'Passive-Aggressive': PassiveAggressiveClassifier(),
     }
 
@@ -440,6 +443,9 @@ print('已完成特征空间增量...')
 # saveModel()
 
 # end 保存训练好的模型------------------------------------------------------
+
+joblib.dump(sorted(cls_stats.items()), "ResultPicData/dataitem7.d")
+joblib.dump(list(sorted(cls_stats.keys())), "ResultPicData/datakeys7.d")
 
 ###############################################################################
 # Plot results

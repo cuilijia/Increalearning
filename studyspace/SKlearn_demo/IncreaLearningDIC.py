@@ -36,7 +36,7 @@ TrainDataSize = 8 #训练集个数
 all_classes = np.arange(20) #分类器类别上限
 
 printjumpsize=1 # 输出间隔
-A_all=0.9478
+A_all=0
 # 读入数据集 -------------------------------------------------------------------------------
 #  由复旦大学李荣陆提供。answer.rar为测试语料，共9833篇文档；train.rar为训练语料，共9804篇文档，分为20个类别。
 #  训练语料和测试语料基本按照1:1的比例来划分。收集工作花费了不少人力和物力，所以请大家在使用时尽量注明来源
@@ -154,14 +154,14 @@ def progress(cls_name, stats):
 partial_fit_classifiers = {
     # 'SGD': SGDClassifier(),
     # 'Perceptron': Perceptron(),
-    'NB Multinomial': MultinomialNB(alpha=0.01),
+    'NB (feature space)': MultinomialNB(alpha=0.01),
     # 'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 # 载入旧的分类器容器
 classifiers={
     # 'SGD': SGDClassifier(),
     # 'Perceptron': Perceptron(),
-    'NB Multinomial': MultinomialNB(alpha=0.01),
+    'NB (feature space)': MultinomialNB(alpha=0.01),
     # 'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 
@@ -261,6 +261,8 @@ def saveModel():
 
 # end 保存训练好的模型------------------------------------------------------
 
+joblib.dump(sorted(cls_stats.items()), "featureitem5000.d")
+joblib.dump(list(sorted(cls_stats.keys())), "featurekeys5000.d")
 ###############################################################################
 # Plot results
 # 绘制结果

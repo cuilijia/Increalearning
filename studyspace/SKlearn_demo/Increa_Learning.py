@@ -30,11 +30,11 @@ ytest=[]#测试集类别
 xtrain=[]#训练集文本向量
 ytrain=[]#训练集类别
 
-TrainDataSize = 8 #训练集个数
+TrainDataSize = 20 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
-printjumpsize=1 # 输出间隔
+printjumpsize=4 # 输出间隔
 
 # 读入数据集 -------------------------------------------------------------------------------
 #  由复旦大学李荣陆提供。answer.rar为测试语料，共9833篇文档；train.rar为训练语料，共9804篇文档，分为20个类别。
@@ -142,14 +142,16 @@ def progress(cls_name, stats):
 partial_fit_classifiers = {
     # 'SGD': SGDClassifier(),
     # 'Perceptron': Perceptron(),
-    'NB Multinomial': MultinomialNB(alpha=0.01),
+    'NB (hash trick)': MultinomialNB(alpha=0.01),
+    # 'NB by feature': MultinomialNB(alpha=0.01),
     # 'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 # 载入旧的分类器容器
 classifiers={
     # 'SGD': SGDClassifier(),
     # 'Perceptron': Perceptron(),
-    'NB Multinomial': MultinomialNB(alpha=0.01),
+    'NB (hash trick)': MultinomialNB(alpha=0.01),
+    # 'NB by feature': MultinomialNB(alpha=0.01),
     # 'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 
@@ -172,7 +174,7 @@ def getclassifiers():
             cls = joblib.load("Train_Model_" + cls_name + ".m")
         classifiers[cls_name]=cls
 
-getclassifiers()
+# getclassifiers()
 
 # end 获取以往保存下来的的模型------------------------------------------------------
 
@@ -240,6 +242,9 @@ def saveModel():
 # saveModel()
 
 # end 保存训练好的模型------------------------------------------------------
+#
+joblib.dump(sorted(cls_stats.items()), "hashdataitem.d")
+joblib.dump(list(sorted(cls_stats.keys())), "hashdatakeys.d")
 
 ###############################################################################
 # Plot results
@@ -258,7 +263,6 @@ def plot_accuracy(x, y, x_legend):
     plt.plot(x, y)
 
 
-
 def drawresults():
     rcParams['legend.fontsize'] = 10
     cls_names = list(sorted(cls_stats.keys()))
@@ -266,78 +270,81 @@ def drawresults():
     # Plot accuracy evolution 绘制准确性演变情况
     plt.figure()
     for _, stats in sorted(cls_stats.items()):
+
         # Plot accuracy evolution with #examples 用#examples绘制准确性演变图
         accuracy, n_examples = zip(*stats['accuracy_history'])
+        print('a=', accuracy, 'e=', n_examples)
+        plot_accuracy(n_examples, accuracy, "Number of training examples")
         plot_accuracy(n_examples, accuracy, "Number of training examples")
         ax = plt.gca()
         ax.set_ylim((0.5, 1))
     plt.legend(cls_names, loc='best')
 
-    plt.figure()
-    for _, stats in sorted(cls_stats.items()):
-        # Plot accuracy evolution with runtime 用运行时绘制准确度的演变
-        accuracy, runtime = zip(*stats['runtime_history'])
-        plot_accuracy(runtime, accuracy, 'runtime (s)')
-        ax = plt.gca()
-        ax.set_ylim((0.5, 1))
-    plt.legend(cls_names, loc='best')
-
-    # Plot fitting times 绘制拟合时间
-    plt.figure()
-    fig = plt.gcf()
-    cls_runtime = []
-    for cls_name, stats in sorted(cls_stats.items()):
-        cls_runtime.append(stats['total_fit_time'])
-
-    cls_runtime.append(total_vect_time)
-    cls_names.append('Vectorization')
-    bar_colors = ['b', 'g', 'r', 'c', 'm', 'y']
-
-    ax = plt.subplot(111)
-    rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
-                         color=bar_colors)
-
-    ax.set_xticks(np.linspace(0.25, len(cls_names) - 0.75, len(cls_names)))
-    ax.set_xticklabels(cls_names, fontsize=10)
-    ymax = max(cls_runtime) * 1.2
-    ax.set_ylim((0, ymax))
-    ax.set_ylabel('runtime (s)')
-    ax.set_title('Training Times')
-
-    def autolabel(rectangles):
-        """attach some text vi autolabel on rectangles. 在矩形上附加一些文本vi autolabel。"""
-        for rect in rectangles:
-            height = rect.get_height()
-            ax.text(rect.get_x() + rect.get_width() / 2.,
-                    1.05 * height, '%.4f' % height,
-                    ha='center', va='bottom')
-
-    autolabel(rectangles)
-    plt.show()
-
-    # Plot prediction times 绘制预测时间
-    plt.figure()
-    cls_runtime = []
-    cls_names = list(sorted(cls_stats.keys()))
-    for cls_name, stats in sorted(cls_stats.items()):
-        cls_runtime.append(stats['prediction_time'])
-    cls_runtime.append(parsing_time)
-    cls_names.append('Read/Parse\n+Feat.Extr.')
-    cls_runtime.append(vectorizing_time)
-    cls_names.append('Hashing\n+Vect.')
-
-    ax = plt.subplot(111)
-    rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
-                         color=bar_colors)
-
-    ax.set_xticks(np.linspace(0.25, len(cls_names) - 0.75, len(cls_names)))
-    ax.set_xticklabels(cls_names, fontsize=8)
-    plt.setp(plt.xticks()[1], rotation=30)
-    ymax = max(cls_runtime) * 1.2
-    ax.set_ylim((0, ymax))
-    ax.set_ylabel('runtime (s)')
-    ax.set_title('Prediction Times ')
-    autolabel(rectangles)
+    # plt.figure()
+    # for _, stats in sorted(cls_stats.items()):
+    #     # Plot accuracy evolution with runtime 用运行时绘制准确度的演变
+    #     accuracy, runtime = zip(*stats['runtime_history'])
+    #     plot_accuracy(runtime, accuracy, 'runtime (s)')
+    #     ax = plt.gca()
+    #     ax.set_ylim((0.5, 1))
+    # plt.legend(cls_names, loc='best')
+    #
+    # # Plot fitting times 绘制拟合时间
+    # plt.figure()
+    # fig = plt.gcf()
+    # cls_runtime = []
+    # for cls_name, stats in sorted(cls_stats.items()):
+    #     cls_runtime.append(stats['total_fit_time'])
+    #
+    # cls_runtime.append(total_vect_time)
+    # cls_names.append('Vectorization')
+    # bar_colors = ['b', 'g', 'r', 'c', 'm', 'y']
+    #
+    # ax = plt.subplot(111)
+    # rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
+    #                      color=bar_colors)
+    #
+    # ax.set_xticks(np.linspace(0.25, len(cls_names) - 0.75, len(cls_names)))
+    # ax.set_xticklabels(cls_names, fontsize=10)
+    # ymax = max(cls_runtime) * 1.2
+    # ax.set_ylim((0, ymax))
+    # ax.set_ylabel('runtime (s)')
+    # ax.set_title('Training Times')
+    #
+    # def autolabel(rectangles):
+    #     """attach some text vi autolabel on rectangles. 在矩形上附加一些文本vi autolabel。"""
+    #     for rect in rectangles:
+    #         height = rect.get_height()
+    #         ax.text(rect.get_x() + rect.get_width() / 2.,
+    #                 1.05 * height, '%.4f' % height,
+    #                 ha='center', va='bottom')
+    #
+    # autolabel(rectangles)
+    # plt.show()
+    #
+    # # Plot prediction times 绘制预测时间
+    # plt.figure()
+    # cls_runtime = []
+    # cls_names = list(sorted(cls_stats.keys()))
+    # for cls_name, stats in sorted(cls_stats.items()):
+    #     cls_runtime.append(stats['prediction_time'])
+    # cls_runtime.append(parsing_time)
+    # cls_names.append('Read/Parse\n+Feat.Extr.')
+    # cls_runtime.append(vectorizing_time)
+    # cls_names.append('Hashing\n+Vect.')
+    #
+    # ax = plt.subplot(111)
+    # rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
+    #                      color=bar_colors)
+    #
+    # ax.set_xticks(np.linspace(0.25, len(cls_names) - 0.75, len(cls_names)))
+    # ax.set_xticklabels(cls_names, fontsize=8)
+    # plt.setp(plt.xticks()[1], rotation=30)
+    # ymax = max(cls_runtime) * 1.2
+    # ax.set_ylim((0, ymax))
+    # ax.set_ylabel('runtime (s)')
+    # ax.set_title('Prediction Times ')
+    # autolabel(rectangles)
     plt.show()
 
 

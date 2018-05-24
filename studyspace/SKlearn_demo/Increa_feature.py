@@ -30,13 +30,13 @@ ytest=[]#测试集类别
 xtrain=[]#训练集文本向量
 ytrain=[]#训练集类别
 
-TrainDataSize = 8 #训练集个数
+TrainDataSize = 1 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
 printjumpsize = 1 # 输出间隔
 
-FeatureSpaceSize =20000
+FeatureSpaceSize =8000
 
 updatesize=1
 # 读入数据集 -------------------------------------------------------------------------------
