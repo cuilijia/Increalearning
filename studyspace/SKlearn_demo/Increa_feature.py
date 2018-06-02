@@ -30,13 +30,13 @@ ytest=[]#测试集类别
 xtrain=[]#训练集文本向量
 ytrain=[]#训练集类别
 
-TrainDataSize = 1 #训练集个数
+TrainDataSize = 12 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
 printjumpsize = 1 # 输出间隔
 
-FeatureSpaceSize =8000
+FeatureSpaceSize =50000
 
 updatesize=1
 # 读入数据集 -------------------------------------------------------------------------------
@@ -106,6 +106,23 @@ print('训练样本集 ',TrainDataSize,' 份')
 print('测试样本集 ',1,' 份')
 print("一份样本集为 %d 条  " % (len(ytest)))
 # end 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
+
+#不放回情况训练集划分
+def cutdatafornoreturen():
+    global xtrain,ytrain
+    Nxtrain=[]
+    xx=[]
+    yy=[]
+    Nytrain=[]
+    for dicnum in range(5):
+        for cc in range(len(xtrain[dicnum])):
+            Nxtrain.append(xtrain[dicnum][cc])
+            Nytrain.append(ytrain[dicnum][cc])
+    xx.append(Nxtrain)
+    xtrain=xx
+    yy.append(Nytrain)
+    ytrain=yy
+    print(len(xtrain))
 
 # 这里有一些支持`partial_fit`方法的分类器
 # 新创建分类器容器

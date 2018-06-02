@@ -30,11 +30,11 @@ ytest=[]#测试集类别
 xtrain=[]#训练集文本向量
 ytrain=[]#训练集类别
 
-TrainDataSize = 20 #训练集个数
+TrainDataSize = 8 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
-printjumpsize=4 # 输出间隔
+printjumpsize=2 # 输出间隔
 
 # 读入数据集 -------------------------------------------------------------------------------
 #  由复旦大学李荣陆提供。answer.rar为测试语料，共9833篇文档；train.rar为训练语料，共9804篇文档，分为20个类别。

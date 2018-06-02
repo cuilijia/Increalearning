@@ -59,18 +59,19 @@ printjumpsize=8 # 输出间隔
 # keys6 = joblib.load("ResultPicData/datakeys6.d")
 # item7 = joblib.load("ResultPicData/dataitem7.d")
 # keys7 = joblib.load("ResultPicData/datakeys7.d")
-item1 = joblib.load("featuredataitem.d")
-keys1 = joblib.load("featuredatakeys.d")
-item3 = joblib.load("featureitem15000.d")
-keys3 = joblib.load("featurekeys15000.d")
-item4 = joblib.load("featureitem10000.d")
-keys4 = joblib.load("featurekeys10000.d")
-item5 = joblib.load("featureitem5000.d")
-keys5 = joblib.load("featurekeys5000.d")
-item2 = joblib.load("hashdataitem.d")
-keys2 = joblib.load("hashdatakeys.d")
+item2 = joblib.load("ResultPicData2/featuredataitem.d")
+keys2 = joblib.load("ResultPicData2/featuredatakeys.d")
+item3 = joblib.load("ResultPicData2/featureitem15000.d")
+keys3 = joblib.load("ResultPicData2/featurekeys15000.d")
+item4 = joblib.load("ResultPicData2/featureitem10000.d")
+keys4 = joblib.load("ResultPicData2/featurekeys10000.d")
+item5 = joblib.load("ResultPicData2/featureitem5000.d")
+keys5 = joblib.load("ResultPicData2/featurekeys5000.d")
+item1 = joblib.load("ResultPicData2/hashdataitem.d")
+keys1 = joblib.load("ResultPicData2/hashdatakeys.d")
 # keys=keys1+keys2+keys3+keys4+keys5+keys6+keys7
-keys=keys1+['NB (hash trick)']+['NB (feature20000)']+['NB (feature15000)']+['NB (feature10000)']+['NB (feature5000)']
+keys = ['NB (hash trick)']+['NB (feature20000)']+['NB (feature15000)']\
+       +['NB (feature10000)']+['NB (feature5000)']
 ###############################################################################
 # Plot results
 # 绘制结果

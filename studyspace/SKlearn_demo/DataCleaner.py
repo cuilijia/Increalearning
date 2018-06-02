@@ -1,4 +1,5 @@
-# 数据集加工
+
+# 原始数据预处理
 # 消去空格 回车,消去停用词
 # 进行中文分词
 
@@ -17,6 +18,8 @@ print(stopkey.__len__())
 
 i = 0
 data_path = os.path.join(get_data_home(), "FUDAN/train")
+
+
 for docname in glob(os.path.join(data_path, "*")):
     doc = []
     for filename in glob(os.path.join(docname, "*.txt")):

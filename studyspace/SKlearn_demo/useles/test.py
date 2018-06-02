@@ -1,16 +1,13 @@
-
+# 不放回情况实验
 import os.path
 from glob import glob
 from sklearn.datasets import get_data_home
 import os.path
 from sklearn.feature_extraction.text import HashingVectorizer
 import time
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
-
-
 #SGDClassifier是一个用随机梯度下降算法训练的线性分类器的集合。默认情况下是一个线性（软间隔）支持向量机分类器。
 from sklearn.linear_model import SGDClassifier
 #线性回归模型
@@ -19,12 +16,11 @@ from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.linear_model import Perceptron
 #朴素贝叶斯 （多项式分布） ,用于处理多项离散数据集
 from sklearn.naive_bayes import MultinomialNB
-
 from sklearn.externals import joblib
-
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, TfidfTransformer
-
 from sklearn.feature_selection import SelectKBest ,chi2
+from sklearn.model_selection import cross_val_score
+
 
 data=[]#所有数据集
 
@@ -34,22 +30,20 @@ ytest=[]#测试集类别
 xtrain=[]#训练集文本向量
 ytrain=[]#训练集类别
 
-TrainDataSize = 8 #训练集个数
+TrainDataSize = 12 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
 printjumpsize = 1 # 输出间隔
 
 FeatureSpaceSize = 50000
+A_all=0.9065
 
-featurespacename='NB (featrue=50000)'
-A_all=0
-
-updatesize = 8
+updatesize = 5
+firsttrainloc=updatesize
 
 recordAccuracy =[]
 recordAccuracyList =[]
-
 
 # 读入数据集 -------------------------------------------------------------------------------
 def ReadData(path):
@@ -69,7 +63,7 @@ def ReadData(path):
             # print("---------------------------------------------------")
             s.close()
         data.append(doc)
-        print("已读入样本集: ", docname,'共计',docnum,'份')
+        print("已读入样本集: ", docname,'共计',docnum,'篇文档')
         i = i + 1
 
 ReadData("FUDAN/train")
@@ -79,13 +73,13 @@ ReadData("FUDAN/train")
 Num_mintype=0
 Num_maxtype=len(data)
 type_start =Num_mintype
-type_end = 20
+type_end = Num_maxtype
 typerange = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
              10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
 if type_end>Num_maxtype:
     type_end=Num_maxtype
-# 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
+# 划分训练类别成为测试和训练样本集(无放回抽样) ---------------------------------------------------------------
 def getTEST():
     global data
     for j in range(type_start, type_end):
@@ -99,15 +93,13 @@ def getTRAIN():
         xtrain.append([])
         ytrain.append([])
 
-    # print('type_end:',type_end)
 
+    # 控制进行训练的种类
     for j in range(type_start, type_end):
         for i in range(len(data[j])):
             for p in range(TrainDataSize):
                 if (i in range(int(len(data[j]) / (TrainDataSize) * (p)),
                                int(len(data[j]) / (TrainDataSize)) * (p + 1))):
-                    # print(int(len(data[j]) / (TrainDataSize ) * (p)), 'to',
-                    #       int(len(data[j]) / (TrainDataSize )) * (p+1 ))
                     xtrain[p].append(data[j][i]['content'])
                     ytrain[p].append(data[j][i]['type'])
 
@@ -119,6 +111,11 @@ print('训练样本集 ',len(ytrain[0]),'条',TrainDataSize,'份')
 print('测试样本集 ',len(ytest),' 条')
 # end 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
 
+# 划分不同的训练集
+xtrianfordic = []
+for numdic in range(updatesize):
+    xtrianfordic.append(xtrain[numdic])
+#
 
 # test data statistics 测试数据的统计
 test_stats = {'n_test': 0, 'n_test_pos': 0}
@@ -137,7 +134,7 @@ tick = time.time()
 partial_fit_classifiers = {
     # 'SGD': SGDClassifier(),
     # 'Perceptron': Perceptron(),
-    featurespacename: MultinomialNB(alpha=0.01),
+    'NB Multinomial': MultinomialNB(alpha=0.01),
     # 'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 # 载入旧的分类器容器
@@ -213,28 +210,12 @@ def sortbyword(one_list,size,word):
                     return result_list
         else:
             i+=1
-
     return result_list
 
 
 oldVocubularysave = []
 newVocubularysave = []
 
-# if os.path.exists("newVocubularysave.v"):
-#     oldVocubularysave = joblib.load("newVocubularysave.v")
-
-# stopwordslist=[]
-# if os.path.exists("stopwords"):
-#     print("find stopwords!")
-#     file_object = open('stopwords')
-#     try:
-#         list_of_all_the_lines = file_object.read( )
-#         for word in list_of_all_the_lines:
-#             stopwordslist.append(word)
-#             # print (word)
-#     finally:
-#         file_object.close()
-# # print(stopwordslist[0])
 
 T=0
 
@@ -243,11 +224,12 @@ def IncreasingFIT():
     classifiers = {
         # 'SGD': SGDClassifier(),
         # 'Perceptron': Perceptron(),
-        featurespacename: MultinomialNB(alpha=0.01),
+        'NB Multinomial': MultinomialNB(alpha=0.01),
         # 'Passive-Aggressive': PassiveAggressiveClassifier(),
     }
 
     Vocubularysave = []
+    #获取保存的词典
     if os.path.exists("VocubularySave.v"):
         Vocubularysave = joblib.load("VocubularySave.v")
     VocubularyList = []
@@ -259,7 +241,7 @@ def IncreasingFIT():
     count = vectorizer.fit_transform(xtest)
     X_test = transformer.fit_transform(count)
 
-    for i in range(TrainDataSize):
+    for i in range(firsttrainloc,TrainDataSize):
         tick = time.time()
 
         count = vectorizer.fit_transform(xtrain[i])
@@ -278,7 +260,7 @@ def IncreasingFIT():
             cls.partial_fit(X_train, ytrain[i], classes=all_classes)
 
             # if i % printjumpsize == 0:
-            if i == 0:
+            if i == firsttrainloc:
                 FirstScore= cls.score(X_test, ytest)
 
             if i == (TrainDataSize-1) :
@@ -302,12 +284,7 @@ def IncreasingFIT():
                     acc_history = (cls_stats[cls_name]['accuracy'],
                                    cls_stats[cls_name]['n_train'])
                     cls_stats[cls_name]['accuracy_history'].append(acc_history)
-                    # run_history = (cls_stats[cls_name]['accuracy'],
-                    #                total_vect_time + cls_stats[cls_name]['total_fit_time'])
-                    # cls_stats[cls_name]['runtime_history'].append(run_history)
 
-                    # accumulate test accuracy stats
-                    # 累积测试准确度统计
                     print(progress(cls_name, cls_stats[cls_name]))
                 if T != 0:
                     AccuracyAverage[cls_name]['total_fit_time'] += time.time() - tick
@@ -322,10 +299,6 @@ def IncreasingFIT():
                     acc_history = (AccuracyAverage[cls_name]['accuracy'],
                                    AccuracyAverage[cls_name]['n_train'])
                     AccuracyAverage[cls_name]['accuracy_history'].append(acc_history)
-                    # run_history += (AccuracyAverage[cls_name]['accuracy'],
-                    #                total_vect_time + AccuracyAverage[cls_name]['total_fit_time'])
-                    # AccuracyAverage[cls_name]['runtime_history'].append(run_history)
-
 
                     AccuracyAverage[cls_name]['increaSpeed'] = cls.score(X_test, ytest)-FirstScore
 
@@ -344,23 +317,15 @@ def IncreasingFIT1():
     global T
     for T in range(updatesize):
         tick = time.time()
-        # X_train = vectorizer.transform(xtrain[i])
 
-        count = vectorizer.fit_transform(xtrain[T])
+        count = vectorizer.fit_transform(xtrianfordic[T])
         X_train = transformer.fit_transform(count)
 
         # ----------------------------------------
         VocubularyList = vectorizer.get_feature_names()
 
-        # vectorizer = CountVectorizer(stop_words=None,vocabulary=VocubularyList)
-
-        # tfidf = X_train.toarray().T
-
-        # print(X_train.shape)
         model1=SelectKBest(chi2, k=1)
         X_chi2 = model1.fit_transform(X_train, ytrain[T])
-        # print(X_chi2.shape)
-        # print(model1.scores_.shape)
 
         j = 0
         for i in VocubularyList:
@@ -415,21 +380,6 @@ def IncreasingFIT1():
 print('开始特征空间增量训练...')
 IncreasingFIT1()
 print('已完成特征空间增量...')
-# end 主循环：迭代小批量的例子-----------------------------------------------
-
-
-# print(len(newVocubularysave))0
-# joblib.dump(newVocubularysave, "VocubularySave.v")
-# end 保存训练好的模型------------------------------------------------------
-
-# Main loop : iterate on mini-batches of examples
-# 主循环：迭代小批量的例子-----------------------------------------------
-
-# print('开始增量训练...')
-# IncreasingFIT()
-# IncreasingFIT()
-# print('已完成...')
-# end 主循环：迭代小批量的例子-----------------------------------------------
 
 # 保存训练好的模型------------------------------------------------------
 # def saveModel():
@@ -443,9 +393,6 @@ print('已完成特征空间增量...')
 # saveModel()
 
 # end 保存训练好的模型------------------------------------------------------
-
-joblib.dump(sorted(cls_stats.items()), "ResultPicData/dataitem7.d")
-joblib.dump(list(sorted(cls_stats.keys())), "ResultPicData/datakeys7.d")
 
 ###############################################################################
 # Plot results

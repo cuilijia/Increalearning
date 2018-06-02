@@ -32,11 +32,11 @@ ytest=[]#测试集类别
 xtrain=[]#训练集文本向量
 ytrain=[]#训练集类别
 
-TrainDataSize = 1 #训练集个数
+TrainDataSize = 12 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
-printjumpsize=1 # 输出间隔
+printjumpsize=2 # 输出间隔
 
 # 特征空间ONETIMEVocubulary大小为20000
 
@@ -79,6 +79,23 @@ def getTEST():
                 xtest.append(data[j][i]['content'])
                 ytest.append(data[j][i]['type'])
 
+# def getTRAIN():
+#     global data
+#     for n in range(TrainDataSize):
+#         xtrain.append([])
+#         ytrain.append([])
+#
+#     # print('type_end:',type_end)
+#
+#     for j in range(type_start, type_end):
+#         for i in range(len(data[j])):
+#             for p in range(TrainDataSize):
+#                 if (i in range(int(len(data[j]) / (TrainDataSize) * (p)),
+#                                int(len(data[j]) / (TrainDataSize)) * (p + 1))):
+#                     # print(int(len(data[j]) / (TrainDataSize ) * (p)), 'to',
+#                     #       int(len(data[j]) / (TrainDataSize )) * (p+1 ))
+#                     xtrain[0].append(data[j][i]['content'])
+#                     ytrain[0].append(data[j][i]['type'])
 def getTRAIN():
     global data
     for n in range(TrainDataSize):
@@ -94,8 +111,8 @@ def getTRAIN():
                                int(len(data[j]) / (TrainDataSize)) * (p + 1))):
                     # print(int(len(data[j]) / (TrainDataSize ) * (p)), 'to',
                     #       int(len(data[j]) / (TrainDataSize )) * (p+1 ))
-                    xtrain[0].append(data[j][i]['content'])
-                    ytrain[0].append(data[j][i]['type'])
+                    xtrain[p].append(data[j][i]['content'])
+                    ytrain[p].append(data[j][i]['type'])
 
 getTRAIN()
 ReadData("FUDAN/answer")
@@ -106,6 +123,20 @@ print('训练样本集 ',len(ytest),' 条')
 print('测试样本集 ',len(ytest),' 条')
 # end 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
 
+def cutdatafornoreturen():
+    Nxtrain=[]
+    xx=[]
+    yy=[]
+    Nytrain=[]
+    for dicnum in range(5,12):
+        for cc in range(len(xtrain[dicnum])):
+            Nxtrain.append(xtrain[dicnum][cc])
+            Nytrain.append(ytrain[dicnum][cc])
+    xx.append(Nxtrain)
+    xtrain=xx
+    yy.append(Nytrain)
+    ytrain=yy
+    print(len(xtrain))
 
 # test data statistics 测试数据的统计
 test_stats = {'n_test': 0, 'n_test_pos': 0}
