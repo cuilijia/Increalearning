@@ -232,7 +232,7 @@ print('已完成...')
 def saveModel():
     for cls_name, cls_useless in partial_fit_classifiers.items():
         cls = classifiers[cls_name]
-        joblib.dump(cls, "Train_Model_" + cls_name + ".m")
+        joblib.dump(cls, "modle/Model_" + cls_name + ".m")
 
         # 预测函数
         # print(cls.predict(X_test))
@@ -341,6 +341,6 @@ def drawresults():
     plt.show()
 
 
-drawresults()
+# drawresults()
 
 

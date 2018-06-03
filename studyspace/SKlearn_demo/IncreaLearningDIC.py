@@ -11,12 +11,6 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
 
-#SGDClassifier是一个用随机梯度下降算法训练的线性分类器的集合。默认情况下是一个线性（软间隔）支持向量机分类器。
-from sklearn.linear_model import SGDClassifier
-#线性回归模型
-from sklearn.linear_model import PassiveAggressiveClassifier
-#线性回归模型
-from sklearn.linear_model import Perceptron
 #朴素贝叶斯  ,用于处理多项离散数据集
 from sklearn.naive_bayes import MultinomialNB
 
@@ -37,6 +31,12 @@ all_classes = np.arange(20) #分类器类别上限
 
 printjumpsize=1 # 输出间隔
 A_all=0
+
+featurespacesize=15000
+
+vocname='vocubulary/VocubularySave('+str(featurespacesize)+').v'
+
+modlename='NB (feature space)'+str(featurespacesize)
 # 读入数据集 -------------------------------------------------------------------------------
 #  由复旦大学李荣陆提供。answer.rar为测试语料，共9833篇文档；train.rar为训练语料，共9804篇文档，分为20个类别。
 #  训练语料和测试语料基本按照1:1的比例来划分。收集工作花费了不少人力和物力，所以请大家在使用时尽量注明来源
@@ -96,8 +96,6 @@ def getTRAIN():
             for p in range(TrainDataSize):
                 if (i in range(int(len(data[j]) / (TrainDataSize) * (p)),
                                int(len(data[j]) / (TrainDataSize)) * (p + 1))):
-                    # print(int(len(data[j]) / (TrainDataSize ) * (p)), 'to',
-                    #       int(len(data[j]) / (TrainDataSize )) * (p+1 ))
                     xtrain[p].append(data[j][i]['content'])
                     ytrain[p].append(data[j][i]['type'])
 
@@ -117,11 +115,11 @@ tick = time.time()
 parsing_time = time.time() - tick
 tick = time.time()
 
-# 数据集文本向量化 (哈希技巧) -------------------------------------------------------
+# 数据集文本向量化  -------------------------------------------------------
 
 oldVocubularysave=[]
-if os.path.exists("VocubularySave.v"):
-    oldVocubularysave = joblib.load("VocubularySave.v")
+if os.path.exists(vocname):
+    oldVocubularysave = joblib.load(vocname)
 VocubularyList=[]
 for numV in oldVocubularysave:
     VocubularyList.append(numV['name'])
@@ -130,7 +128,7 @@ transformer = TfidfTransformer()
 
 count = vectorizer.fit_transform(xtest)
 X_test = transformer.fit_transform(count)
-# end 数据集文本向量化 (哈希技巧) -------------------------------------------------------
+# end 数据集文本向量化  -------------------------------------------------------
 
 vectorizing_time = time.time() - tick
 test_stats['n_test'] += len(ytest)
@@ -152,17 +150,11 @@ def progress(cls_name, stats):
 # 这里有一些支持`partial_fit`方法的分类器
 # 新创建分类器容器
 partial_fit_classifiers = {
-    # 'SGD': SGDClassifier(),
-    # 'Perceptron': Perceptron(),
-    'NB (feature space)': MultinomialNB(alpha=0.01),
-    # 'Passive-Aggressive': PassiveAggressiveClassifier(),
+    modlename: MultinomialNB(alpha=0.01),
 }
 # 载入旧的分类器容器
 classifiers={
-    # 'SGD': SGDClassifier(),
-    # 'Perceptron': Perceptron(),
-    'NB (feature space)': MultinomialNB(alpha=0.01),
-    # 'Passive-Aggressive': PassiveAggressiveClassifier(),
+    modlename: MultinomialNB(alpha=0.01),
 }
 
 cls_stats = {}
@@ -244,7 +236,6 @@ def IncreasingFIT():
 
 print('开始增量训练...')
 IncreasingFIT()
-# IncreasingFIT()
 print('已完成...')
 # end 主循环：迭代小批量的例子-----------------------------------------------
 
@@ -252,17 +243,14 @@ print('已完成...')
 def saveModel():
     for cls_name, cls_useless in partial_fit_classifiers.items():
         cls = classifiers[cls_name]
-        joblib.dump(cls, "Train_Model_" + cls_name + ".m")
+        joblib.dump(cls, "modle/Model_" + cls_name + ".m")
 
-        # 预测函数
-        # print(cls.predict(X_test))
-
-# saveModel()
+saveModel()
 
 # end 保存训练好的模型------------------------------------------------------
 
-joblib.dump(sorted(cls_stats.items()), "featureitem5000.d")
-joblib.dump(list(sorted(cls_stats.keys())), "featurekeys5000.d")
+joblib.dump(sorted(cls_stats.items()), "ResultPicData2/featureitem15000.d")
+joblib.dump(list(sorted(cls_stats.keys())), "ResultPicData2/featurekeys15000.d")
 ###############################################################################
 # Plot results
 # 绘制结果
@@ -295,71 +283,6 @@ def drawresults():
         ax.set_ylim((0.5, 1))
     plt.legend(cls_names, loc='best')
 
-    plt.figure()
-    for _, stats in sorted(cls_stats.items()):
-        # Plot accuracy evolution with runtime 用运行时绘制准确度的演变
-        accuracy, runtime = zip(*stats['runtime_history'])
-        plot_accuracy(runtime, accuracy, 'runtime (s)')
-        ax = plt.gca()
-        ax.set_ylim((0.5, 1))
-    plt.legend(cls_names, loc='best')
-
-    # Plot fitting times 绘制拟合时间
-    plt.figure()
-    fig = plt.gcf()
-    cls_runtime = []
-    for cls_name, stats in sorted(cls_stats.items()):
-        cls_runtime.append(stats['total_fit_time'])
-
-    cls_runtime.append(total_vect_time)
-    cls_names.append('Vectorization')
-    bar_colors = ['b', 'g', 'r', 'c', 'm', 'y']
-
-    ax = plt.subplot(111)
-    rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
-                         color=bar_colors)
-
-    ax.set_xticks(np.linspace(0.25, len(cls_names) - 0.75, len(cls_names)))
-    ax.set_xticklabels(cls_names, fontsize=10)
-    ymax = max(cls_runtime) * 1.2
-    ax.set_ylim((0, ymax))
-    ax.set_ylabel('runtime (s)')
-    ax.set_title('Training Times')
-
-    def autolabel(rectangles):
-        """attach some text vi autolabel on rectangles. 在矩形上附加一些文本vi autolabel。"""
-        for rect in rectangles:
-            height = rect.get_height()
-            ax.text(rect.get_x() + rect.get_width() / 2.,
-                    1.05 * height, '%.4f' % height,
-                    ha='center', va='bottom')
-
-    autolabel(rectangles)
-    plt.show()
-
-    # Plot prediction times 绘制预测时间
-    plt.figure()
-    cls_runtime = []
-    cls_names = list(sorted(cls_stats.keys()))
-    for cls_name, stats in sorted(cls_stats.items()):
-        cls_runtime.append(stats['prediction_time'])
-    cls_runtime.append(parsing_time)
-    cls_names.append('Read/Parse\n+Feat.Extr.')
-    cls_runtime.append(vectorizing_time)
-    cls_names.append('Hashing\n+Vect.')
-
-    ax = plt.subplot(111)
-    rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
-                         color=bar_colors)
-
-    ax.set_xticks(np.linspace(0.25, len(cls_names) - 0.75, len(cls_names)))
-    ax.set_xticklabels(cls_names, fontsize=8)
-    plt.setp(plt.xticks()[1], rotation=30)
-    ymax = max(cls_runtime) * 1.2
-    ax.set_ylim((0, ymax))
-    ax.set_ylabel('runtime (s)')
-    ax.set_title('Prediction Times ')
-    autolabel(rectangles)
     plt.show()
 
 

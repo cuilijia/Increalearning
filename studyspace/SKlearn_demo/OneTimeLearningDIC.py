@@ -32,14 +32,19 @@ ytest=[]#测试集类别
 xtrain=[]#训练集文本向量
 ytrain=[]#训练集类别
 
-TrainDataSize = 12 #训练集个数
+TrainDataSize = 1 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
-printjumpsize=2 # 输出间隔
+printjumpsize=1 # 输出间隔
 
-# 特征空间ONETIMEVocubulary大小为20000
+vocname="vocubulary/VocubularySave(5000).v"
 
+# 实际参与训练的类型范围
+Num_mintype=0
+Num_maxtype=20
+type_start =Num_mintype
+type_end = Num_maxtype
 # 读入数据集 -------------------------------------------------------------------------------
 def ReadData(path):
     i = 0
@@ -60,16 +65,8 @@ def ReadData(path):
         print("已读入样本集: ", docname)
         i = i + 1
 
-ReadData("FUDAN/train")
 # end 读入数据集 -------------------------------------------------------------------------------
 
-# 实际参与训练的类型范围
-Num_mintype=0
-Num_maxtype=len(data)
-type_start =Num_mintype
-type_end = Num_maxtype
-# typerange = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-#              10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
 # 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
 def getTEST():
@@ -79,23 +76,6 @@ def getTEST():
                 xtest.append(data[j][i]['content'])
                 ytest.append(data[j][i]['type'])
 
-# def getTRAIN():
-#     global data
-#     for n in range(TrainDataSize):
-#         xtrain.append([])
-#         ytrain.append([])
-#
-#     # print('type_end:',type_end)
-#
-#     for j in range(type_start, type_end):
-#         for i in range(len(data[j])):
-#             for p in range(TrainDataSize):
-#                 if (i in range(int(len(data[j]) / (TrainDataSize) * (p)),
-#                                int(len(data[j]) / (TrainDataSize)) * (p + 1))):
-#                     # print(int(len(data[j]) / (TrainDataSize ) * (p)), 'to',
-#                     #       int(len(data[j]) / (TrainDataSize )) * (p+1 ))
-#                     xtrain[0].append(data[j][i]['content'])
-#                     ytrain[0].append(data[j][i]['type'])
 def getTRAIN():
     global data
     for n in range(TrainDataSize):
@@ -109,11 +89,10 @@ def getTRAIN():
             for p in range(TrainDataSize):
                 if (i in range(int(len(data[j]) / (TrainDataSize) * (p)),
                                int(len(data[j]) / (TrainDataSize)) * (p + 1))):
-                    # print(int(len(data[j]) / (TrainDataSize ) * (p)), 'to',
-                    #       int(len(data[j]) / (TrainDataSize )) * (p+1 ))
                     xtrain[p].append(data[j][i]['content'])
                     ytrain[p].append(data[j][i]['type'])
 
+ReadData("FUDAN/train")
 getTRAIN()
 ReadData("FUDAN/answer")
 getTEST()
@@ -122,21 +101,6 @@ print('一次性非增量式朴素贝叶斯：')
 print('训练样本集 ',len(ytest),' 条')
 print('测试样本集 ',len(ytest),' 条')
 # end 划分训练类别成为测试和训练样本集 ---------------------------------------------------------------
-
-def cutdatafornoreturen():
-    Nxtrain=[]
-    xx=[]
-    yy=[]
-    Nytrain=[]
-    for dicnum in range(5,12):
-        for cc in range(len(xtrain[dicnum])):
-            Nxtrain.append(xtrain[dicnum][cc])
-            Nytrain.append(ytrain[dicnum][cc])
-    xx.append(Nxtrain)
-    xtrain=xx
-    yy.append(Nytrain)
-    ytrain=yy
-    print(len(xtrain))
 
 # test data statistics 测试数据的统计
 test_stats = {'n_test': 0, 'n_test_pos': 0}
@@ -151,8 +115,8 @@ tick = time.time()
 # X_test = vectorizer.transform(xtest)
 
 oldVocubularysave=[]
-if os.path.exists("ONETIMEVocubularySave.v"):
-    oldVocubularysave = joblib.load("ONETIMEVocubularySave.v")
+if os.path.exists(vocname):
+    oldVocubularysave = joblib.load(vocname)
 VocubularyList=[]
 for numV in oldVocubularysave:
     VocubularyList.append(numV['name'])
@@ -207,8 +171,8 @@ total_vect_time = 0.0
 # 载入以往保存下来的模型------------------------------------------------------
 def getclassifiers():
     for cls_name, cls in partial_fit_classifiers.items():
-        if os.path.exists("Train_Model_" + cls_name + ".m"):
-            cls = joblib.load("Train_Model_" + cls_name + ".m")
+        if os.path.exists("model/Model_" + cls_name + ".m"):
+            cls = joblib.load("model/Model_" + cls_name + ".m")
         classifiers[cls_name]=cls
 
 # getclassifiers()
@@ -272,10 +236,7 @@ print('已完成...')
 def saveModel():
     for cls_name, cls_useless in partial_fit_classifiers.items():
         cls = classifiers[cls_name]
-        joblib.dump(cls, "Train_Model_" + cls_name + ".m")
-
-        # 预测函数
-        # print(cls.predict(X_test))
+        joblib.dump(cls, "model/Model_" + cls_name + ".m")
 
 # saveModel()
 
@@ -381,6 +342,6 @@ def drawresults():
     plt.show()
 
 
-drawresults()
+# drawresults()
 
 

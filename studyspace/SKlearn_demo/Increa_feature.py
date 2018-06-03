@@ -30,15 +30,17 @@ ytest=[]#测试集类别
 xtrain=[]#训练集文本向量
 ytrain=[]#训练集类别
 
-TrainDataSize = 12 #训练集个数
+TrainDataSize = 1 #训练集个数
 
 all_classes = np.arange(20) #分类器类别上限
 
 printjumpsize = 1 # 输出间隔
 
-FeatureSpaceSize =50000
+FeatureSpaceSize =5000
 
 updatesize=1
+
+vocname='vocubulary/VocubularySave(5000)forone.v'
 # 读入数据集 -------------------------------------------------------------------------------
 # 读入数据集 -------------------------------------------------------------------------------
 def ReadData(path):
@@ -147,8 +149,8 @@ total_vect_time = 0.0
 # 载入以往保存下来的模型------------------------------------------------------
 def getclassifiers():
     for cls_name, cls in partial_fit_classifiers.items():
-        if os.path.exists("Train_Model_" + cls_name + ".m"):
-            cls = joblib.load("Train_Model_" + cls_name + ".m")
+        if os.path.exists("modle/Model_" + cls_name + ".m"):
+            cls = joblib.load("modle/Model_" + cls_name + ".m")
         classifiers[cls_name]=cls
 
 getclassifiers()
@@ -294,7 +296,7 @@ print('已完成...')
 
 print(len(newVocubularysave))
 # joblib.dump(newVocubularysave, "ONETIMEVocubularySave.v")
-joblib.dump(newVocubularysave, "VocubularySave.v")
+joblib.dump(newVocubularysave, vocname)
 # end 保存训练好的模型------------------------------------------------------
 
 
